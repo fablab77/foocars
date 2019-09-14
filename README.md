@@ -8,8 +8,14 @@ Autonmous Vehicle Project at Fubar Labs for the Autonomous Powerwheels Racing co
 
 
 ## More documentation at the wiki
+[First run of a code](./docs/FirstRun.md)
+
+[Car hardware](./docs/Hardware.md)
+
+[Next steps: data collection and training](./docs/Collection_Training.md)
 
 [Autonomous Project Documenatation](https://github.com/fubarlabs/autonomous/wiki) (outdated)
+
 [Foocars project documentation](https://github.com/fubarlabs/foocars/wiki)
 
 ## Code details

@@ -33,6 +33,16 @@ There is a useful utility, `curator`, developed to review data collected and che
 
 
 ### Training code
+After the data is collected, it should be transferred to the location where the model is learned.
+Training code lies also in current repository (thus you will need to clone it on your PC as well).
+Run
+```
+cd <foocars>/training
+python3 train.py collected_data
+```
+It can be advised to use `--epochs 100 --save_frequency 2`. The model is likely to converge within that region.
+
+Then take the resulting file `weights_*.h5` and copy it to the car into your car's `data/weights` directory as `weights.h5` file. 
 
 ### Troubleshooting
 In case the training process fails with `Error: cannot decompress the zipped data`, it means that one of the data packets has been corrupted. That might happen if Python code was terminated, or the SD card in Raspberry has writing issues. Run the following command to try unpacking the code: 
