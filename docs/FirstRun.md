@@ -89,10 +89,9 @@ pip install -r requirements.txt
 Set up the Raspberry Pi services
 ```
 cd /usr/local/bin
-ln -s ~/foocars/services/ottoMicroLogger.py
-ln -s ~/foocars/services/ottoMicroLogger.service
-systemctl enable ~/foocars/services/ottoMicroLogger.service
+systemctl enable ~/foocars/cars/<yourcar>/car.service
 ```
+If you want to get the logs into specific file, please follow the [rsyslog guide](https://stackoverflow.com/questions/37585758/how-to-redirect-output-of-systemd-service-to-a-file).
 
 ## Running the code
 By default, the interface firmware does not pass manual control (R/C remote to servo and motor ESC).
