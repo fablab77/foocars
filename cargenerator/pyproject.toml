@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "cargenerator"
+version = "0.1.0"
+description = "Generates a car, car system service, and car code."
+authors = ["Rick Anderson <rick.rickanderson@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+toml = "^0.10.1"
+argparse = "^1.4.0"
+tqdm = "^4.48.0"
+importlib-resources = "^3.0.0"
+
+[tool.poetry.dev-dependencies]
+
+[tool.poetry.scripts]
+generatecar = "cargenerator.generatecar:generate_car" 
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"

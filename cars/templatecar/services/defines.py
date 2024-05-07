@@ -1,12 +1,10 @@
 import RPi.GPIO as GPIO
-
+import socket
 LED_names={ 
   "boot_RPi" : 2,
   "shutdown_RPi" : 3,
   "autonomous" : 4,
-  "collect_data" : 27,
-  "save_to_USBdrive" : 22,
-  "read_from_USBdrive" : 17,
+  "collect_data" : 27
 }
 
 
@@ -14,16 +12,12 @@ switch_names={
   "shutdown_RPi" : 9,
   "autonomous" : 11,
   "collect_data" : 6,
-  "save_to_USBdrive" : 13,
-  "read_from_USBdrive" : 5,
 }
 
 FRAME_RATE = 40
-DATA_DIR = "/home/pi/foocars/cars/ulysses/data/"
+DATA_DIR = "/home/pi/foocars/cars/"+ socket.gethostname() + "/data/"
 COLLECT_DIR = DATA_DIR + "collected"
 WEIGHTS_DIR = DATA_DIR + "weights/"
-#WEIGHTS_FILE = WEIGHTS_DIR + "weights_2018-04-15_21-43-33_epoch_20.h5"
-#WEIGHTS_FILE = WEIGHTS_DIR + "weights_2018-04-15_21-43-33_epoch_40.h5"
 WEIGHTS_FILE = WEIGHTS_DIR + "weights.h5"
 STEERSTATS_FILE = WEIGHTS_DIR + "steerstats.npz"
 THR_MAX = 1580

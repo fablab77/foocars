@@ -1,6 +1,19 @@
-# FUBAR Labs Autonomous Racing Vehicles
+# What is FOO Cars?
+
+This autonomous vehicle project's goal is to create autonomous racing vehicles in the simplest possible way—a good first car.  The name is a mash-up of Fubar Labs, the mysterious planes called "foo fighters" and "foobar" the ubiquitous getting started variables for programming.  The control system can scale to any vehicles using RC controls.
+
+## How has this project been used?
+* CHI@Edge 2022 Summer Internship
+ * Virtual exercises to access the Cameras, Serial Devices, GPIO Devices, and Machine Learning Environments
+* CHI@Edge 2021 Summer Internship
+  * Virtualize the deployment of vehicle and code on the edge of super computer envrionment.
+ 
+
+### FUBAR Labs Autonomous Racing Vehicles
 
 Autonmous Vehicle Project at Fubar Labs for the Autonomous Powerwheels Racing compeition.
+* Bergen Technical Highschool Workshop Spring 2023
+* Bergen Technical Highschool Workshop Spring 2021
 * Autonomous Powerwheels Racing Pittsburg Makerfiare 2017
  * We totally did laps. We were on the track on time and ready to go!
 * Autonmous Powerwheels Racing Makerfaire NYC 2017
@@ -9,137 +22,125 @@ Autonmous Vehicle Project at Fubar Labs for the Autonomous Powerwheels Racing co
 ## Quickstart
 
 
-
 ### Car Code
 
-Prepare your PI
+## Prepare your PI
 
+Obtain the car code by cloning the project
 ```
-sudo apt-getupdate
-sudo apt-get install python3-pip python3-dev ython3-dev python3-pip python-pip python3-h5py \
-python3-numpy python3-matplotlib python3-scipy python3-pandas 
-```
-Get TensorFlow for PI installed (http://www.instructables.com/id/Google-Tensorflow-on-Rapsberry-Pi/)
-```
-wget https://github.com/samjabrahams/tensorflow-on-raspberry-pi/releases/download/v1.1.0/tensorflow-1.1.0-cp34-cp34m-linux_armv7l.whl
-```
-Install Tensorflow for Python 3.4
-```
-sudo pip3 install pip3 install tensorflow-1.1.0-cp34-cp34m-linux_armv7l.whl 
-```
-If you have Tensorflow on Raspberry PI with Stretch you need to rename the Tensorflow wheel binary:
-
-```
-cp tensorflow-1.1.0-cp34-cp34m-linux_armv7l.whl tensorflow-1.1.0-cp35-cp35m-linux_armv7l.whl
+git clone https://github.com/fubarlabs/foocars
 ```
 
-Fix a potential error message:
+For the Tensorflow 1.15 version fetch the wheel file to the local system:
 ```
-sudo pip3 uninstall mock
-sudo pip3 install mock
+cd ~/foocars
+sh get_tensorflow.sh
 ```
-Install the Python libraries:
+
+
+Install system packages
+```
+sudo apt-get  install build-essential cmake pkg-config libjpeg-dev libtiff5-dev libjasper-dev libpng-dev libavcodec-dev libavformat-dev libswscale-dev libv4l-dev libxvidcore-dev libx264-dev libfontconfig1-dev libcairo2-dev libgdk-pixbuf2.0-dev libpango1.0-dev libgtk2.0-dev libgtk-3-dev libatlas-base-dev gfortran libhdf5-dev libhdf5-serial-dev libhdf5-103 libqtgui4 libqtwebkit4 libqt4-test python3-pyqt5
 
 ```
-git clone https://github.com/fubarlabs/autonomous
-cd autonomous
-virtualenv auto -p python3 
-source auto/bin/activate
-pip install -r requirements.txt
+
+Install poetry
 ```
-Set up the raspberry pi services
+sudo pip3 install poetry
 ```
-cd /usr/local/bin
-ln -s /autonomous/services/ottoMicroLogger.py
-ln -s /autonomous/services/ottoMicroLogger.service
-systemctl enable /autonomous/services/ottoMicroLogger.service
+
+Install platformio
 ```
+sudo pip3 install platformio
+```
+
+Use poetry to create the generate the car
+```
+cd ~/foocars/cargenerator
+poetry install
+poety run generatecar --name yourhostname --output_dir /home/pi/foocars/cars/
+```
+
+Use poetry to create the car code and service
+```
+cd ~/foocars/cars/carservices
+poetry install
+```
+
+Test the PI Hat
+```
+poetry run test_pihat
+```
+
+Test the Car Runner
+```
+poetry run car_runner
+```
+
+Verify the leds and switches are working.
+
+
+
+## Pepare the RC Car and Arduino
 
 ### Note for Arduino
 Code is installed from the Raspberry PI using PLatform IO
-```python2.7
-sudo pip install platformio
+```
+sudo pip3 install platformio
 
 ```
-Platform IO is only Python 2.7 but it can program the Arduino. In our chase it's the Fubarion SD board.
 
-
-### Fubarino SD / Arduino Code
-
-Arduino code location: ./autonomous/arduino
-```
-cd arduino
+### Teensy 3.2 Code
 
 ```
-MOTTO: Small RC Car
-Collection Code: MOTTOServoDtaSampleDelay.ino
+cd ./cars/templatecar/arduino/teensy-FullAutoDrive-port
+```
+
+
+### Arduino Code
 
 ```
-cd MOTTOServoDataSampleDelay
-pio run -t upload
-```
-Full Auto Code: MOTTOFullAutoDrive.ino
-
-```
-cd MOTTOFUllAutoDrive.ino
 pio run -t upload
 ```
 
-OTTO: Power Wheels Autonomus
-Collection Code: NewOTTOFullAutoDrive.ino
+
+### Finish the PI set up
+Set up the raspberry pi services
 ```
-cd NewOTTOFUllAutoDrive.ino
-pio run -t upload
+cd /etc/systemd/system/
+sudo ln -s ~/foocars/cars/carservices/carservices/car.service 
+sudo systemctl start car
+tail -f /var/log/syslog
 ```
-Full Auto Code:  NewOTTOFullAutoDrive.ino
+Verify the car service is running the car runner
+
+
+## Training code
+
+Find a system with a good gpu. It was slow but worked on a Raspberry PI 4.
 ```
-cd NewOTTOFUllAutoDrive.ino
-pio run -t upload
+cd ~/foocars/training
+
+poetry install
+poetry shell
 ```
-### Data Collection Code
-Data collection is done as a Raspberry PI service. The folder services contains:
-1. ottologger.py
-2. ottologger.service
+The training command:
+```
+Using TensorFlow backend.
+usage: train.py [-h] [--weight_filename WEIGHT_FILENAME]
+                [--init_weights INIT_WEIGHTS] [--delay DELAY]
+                [--epochs EPOCHS] [--save_frequency SAVE_FREQUENCY]
+                directories [directories ...]
+```
+Run the training:
+```
+python train.py --epochs 100 --save_frequency 2 ../cars/youcar/data/collected
+```
 
-1. Copy ottologger.py /usr/local/bin
-2. register ottologer.service as a system service
-3. Switch on pin 4 enables and disables collection
-4. LED on pin 11 shows the status of collection
-
-
-### Training code
-
-
-## More documentation at the wiki
-
-[Autonomous Project Documenatation](https://github.com/fubarlabs/autonomous/wiki)
-
-## Code details
-
-Simple model in `basic_model.py`.  Currently linear with mean squared error loss (summed over outputs?)
-
-## Inputs
-
-* Webcam image
-* Current Accel
-* Current Speed
-
-## Future Inputs
-* Current Distance from rangefinder
-* Current Steering wheel angle
-
-## Outputs
-
-* Steering Wheel angle
-* Maybe speed?
-
-# Data sources
-
-* [DeepDrive](http://deepdrive.io)
-  * [Compressed subset of DeepDrive](https://drive.google.com/open?id=0B0zbVEese408WjYtWGdJWTF0Rjg)
-
-# Notes
-
-Driving model is in `current_model.py`.  Weights are on [Google Drive](https://goo.gl/D1WmHQ).  Line 74 of the model will have to be changed to reflect the true location/name of the weights file.
+### Alternately use this example Google Colab Notebook
+* FooCars Training: https://colab.research.google.com/drive/1LxZyNQvWT2VasnOrNkU9dTcpo4B9I0aD?usp=sharing
 
 
+### 2023 Training with Docker
+
+https://colab.research.google.com/drive/1oT3M4QVUoNYkFh4pzktVNBfT0zULwSpM?usp=sharing

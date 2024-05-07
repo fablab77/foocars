@@ -1,0 +1,38 @@
+# only car meta and setting info in here
+Name ="templatecar"
+
+
+[src]
+default_car_dir="./defaultcar/"
+
+[car]
+type="RC"
+
+# PIO compatible naming convention for boards
+# teensy, fubarino_sd, fubarino_mini
+[arduino]
+kind="teensy"
+
+[computer]
+kind="pi"
+#kind="JetsonNano"
+
+[camera]
+camera = "pi"
+kind="pi"
+#camera = "opencv"
+FRAME_RATE = 40
+
+[carsettings]
+THR_MAX = 1580
+
+[data]
+DATA_DIR = "/home/pi/foocars/cars/ulysses/data/"
+COLLECT_DIR = "collected"
+WEIGHTS_DIR = "weights/"
+WEIGHTS_FILE = "weights.h5"
+STEERSTATS_FILE =  "steerstats.npz"
+
+
+
+
