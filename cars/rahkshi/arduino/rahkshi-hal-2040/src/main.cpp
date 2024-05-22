@@ -7,12 +7,13 @@ const short STATUS_LED = PICO_DEFAULT_LED_PIN;
 const short PIN_NEOBUS = 11;  // WS2812
 
 // Pin Defines
-const short PIN_STR = 12;
-const short PIN_THR = 13;
+const short PIN_STR = 14;
+const short PIN_THR = 15;
 //These lines are for the input capture for pwm read off RC
-const short RC_INPUT_THR = 15; // throttle
-const short RC_INPUT_STR = 14; // steering
+const short RC_INPUT_STR = 12; // steering
+const short RC_INPUT_THR = 13; // throttle
 
+const short PIN_NEOPIXEL = 11;
 const short PIN_LED_R = 10;
 const short PIN_LED_G = 9;
 const short PIN_LED_B = 8;
@@ -31,6 +32,10 @@ int chan_b_start, chan_b;
 int lastUpdated_a;          //This is used to keep track of the last time the
 int lastUpdated_b;          //signal was sent.  If nothing is sent for 1s, we disable that output by just setting it hard to 1500ms.
 UniversalTimer watchdog(100, true);
+const short int num_stripes = 2;
+const short int num_leds = 1;
+Adafruit_NeoPixel botlight(num_stripes * num_leds, PIN_NEOPIXEL, NEO_GRB);
+
 
 //this lists the states the fubarino side of the car can be in
 enum carStateEnumeration {
@@ -111,16 +116,12 @@ void channel_b_ISR() {
 	}
 }
 
-void ledSetup() {
-  pinMode(PIN_LED_R, OUTPUT);
-  pinMode(PIN_LED_G, OUTPUT);
-  pinMode(PIN_LED_B, OUTPUT);
-}
-
-void led(unsigned int r, unsigned int g, unsigned int b) {
-  analogWrite(PIN_LED_R, r);
-  analogWrite(PIN_LED_G, g);
-  analogWrite(PIN_LED_B, b);
+void show_color(short int r, short int g, short int b) {
+    for(int i=0; i<num_leds; i++) {
+        botlight.setPixelColor(i, botlight.Color(r + i * 10, g, b));
+        botlight.setPixelColor(i + num_stripes - 1, botlight.Color(r + i * 10, g, b));
+        botlight.show();
+    }
 }
 
 void setup() {
@@ -141,12 +142,8 @@ void setup() {
 
     gTheOldRCcommand = NOT_ACTUAL_COMMAND;
     gcarState = STATE_MANUAL;             // Start of in manual (rc control) mode
-    ledSetup();
-    led(255, 255, 255);
-
-    //digitalWrite(PIN_LED_R, HIGH);
-    //digitalWrite(PIN_LED_G, HIGH);
-    //digitalWrite(PIN_LED_B, HIGH);
+    botlight.begin();
+    show_color(54, 54, 0);
 }
 
 void checkDisable() {
