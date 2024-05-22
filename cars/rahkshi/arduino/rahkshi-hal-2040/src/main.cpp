@@ -13,6 +13,10 @@ const short PIN_THR = 13;
 const short RC_INPUT_THR = 15; // throttle
 const short RC_INPUT_STR = 14; // steering
 
+const short PIN_LED_R = 10;
+const short PIN_LED_G = 9;
+const short PIN_LED_B = 8;
+
 #define DEBUG_SERIAL 1
 
 #define MAX_CMD_BUF 17
@@ -107,6 +111,17 @@ void channel_b_ISR() {
 	}
 }
 
+void ledSetup() {
+  pinMode(PIN_LED_R, OUTPUT);
+  pinMode(PIN_LED_G, OUTPUT);
+  pinMode(PIN_LED_B, OUTPUT);
+}
+
+void led(unsigned int r, unsigned int g, unsigned int b) {
+  analogWrite(PIN_LED_R, r);
+  analogWrite(PIN_LED_G, g);
+  analogWrite(PIN_LED_B, b);
+}
 
 void setup() {
     Serial.begin(115200);
@@ -126,6 +141,12 @@ void setup() {
 
     gTheOldRCcommand = NOT_ACTUAL_COMMAND;
     gcarState = STATE_MANUAL;             // Start of in manual (rc control) mode
+    ledSetup();
+    led(255, 255, 255);
+
+    //digitalWrite(PIN_LED_R, HIGH);
+    //digitalWrite(PIN_LED_G, HIGH);
+    //digitalWrite(PIN_LED_B, HIGH);
 }
 
 void checkDisable() {
@@ -134,6 +155,8 @@ void checkDisable() {
 		chan_a = 1500;
 		chan_b = 1500;
 	}
+
+  digitalWrite(PIN_LED, !digitalRead(PIN_LED));
 }
 
 
