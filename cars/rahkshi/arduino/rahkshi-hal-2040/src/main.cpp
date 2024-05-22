@@ -32,8 +32,11 @@ int chan_b_start, chan_b;
 int lastUpdated_a;          //This is used to keep track of the last time the
 int lastUpdated_b;          //signal was sent.  If nothing is sent for 1s, we disable that output by just setting it hard to 1500ms.
 UniversalTimer watchdog(100, true);
-const short int num_stripes = 2;
+
+const short int num_stripes = 1;
 const short int num_leds = 1;
+short int ledState = LOW;
+
 Adafruit_NeoPixel botlight(num_stripes * num_leds, PIN_NEOPIXEL, NEO_GRB);
 
 
@@ -117,7 +120,7 @@ void channel_b_ISR() {
 }
 
 void show_color(short int r, short int g, short int b) {
-    for(int i=0; i<num_leds; i++) {
+    for(int i=0; i < num_leds * num_stripes; i++) {
         botlight.setPixelColor(i, botlight.Color(r + i * 10, g, b));
         botlight.setPixelColor(i + num_stripes - 1, botlight.Color(r + i * 10, g, b));
         botlight.show();
@@ -143,7 +146,7 @@ void setup() {
     gTheOldRCcommand = NOT_ACTUAL_COMMAND;
     gcarState = STATE_MANUAL;             // Start of in manual (rc control) mode
     botlight.begin();
-    show_color(54, 54, 0);
+    show_color(255, 0, 0);
 }
 
 void checkDisable() {
@@ -151,9 +154,14 @@ void checkDisable() {
 	if ((micros() - lastUpdated_a > 25000) || (micros() - lastUpdated_b > 25000)) {
 		chan_a = 1500;
 		chan_b = 1500;
+        show_color(255, 0, 0);
 	}
 
-  digitalWrite(PIN_LED, !digitalRead(PIN_LED));
+    if (ledState == LOW)
+        ledState = HIGH;
+    else 
+        ledState = LOW;
+    digitalWrite(PIN_LED, ledState);
 }
 
 
@@ -332,6 +340,7 @@ void loop() {
 	    break;
       case STATE_AUTONOMOUS:
         Serial.println("AUTONOMOUS MODE");
+        show_color(255, 255, 0);
         //autonomous state-- while in this state, we have to check for stop auto
         //commands from serial or RC. The only things we check for are RUN_AUTONOMOUSLY
         //and STOP_AUTONOMOUS commands from the Pi, and RC_SIGNALED_STOP_AUTONOMOUS commands
@@ -368,6 +377,7 @@ void loop() {
         break;
       case STATE_MANUAL:
         Serial.println("MANUAL MODE");
+        show_color(255, 127, 0);
         //manual RC state -- while in this state, we send back data frames with the RC signals
         //we also observe for run_auto commands from the Pi and stop_auto commands from the Pi.
         //Receiving the latter while we're in manual means the Pi missed the stopped_auto ack,
@@ -416,6 +426,6 @@ void loop() {
        sendSerialCommand(&SerialOutputData);
     }
     if (watchdog.check()) {
-  	  checkDisable(); //Disable after 1/100th second if not updated.
+  	  checkDisable();           // Disable after 1/100th second if not updated.
     }
 } // loop
