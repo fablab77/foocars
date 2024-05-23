@@ -1,22 +1,21 @@
 #include <Arduino.h>
-#include <Adafruit_NeoPixel.h>
+#include <FastLED.h>
 #include <Servo.h>
 #include <UniversalTimer.h>
 
-const short STATUS_LED = PICO_DEFAULT_LED_PIN;
-const short PIN_NEOBUS = 11;  // WS2812
+const uint8_t STATUS_LED = PICO_DEFAULT_LED_PIN;
 
 // Pin Defines
-const short PIN_STR = 14;
-const short PIN_THR = 15;
+const uint8_t PIN_STR = 14;
+const uint8_t PIN_THR = 15;
 //These lines are for the input capture for pwm read off RC
-const short RC_INPUT_STR = 12; // steering
-const short RC_INPUT_THR = 13; // throttle
+const uint8_t RC_INPUT_STR = 12; // steering
+const uint8_t RC_INPUT_THR = 13; // throttle
 
-const short PIN_NEOPIXEL = 11;
-const short PIN_LED_R = 10;
-const short PIN_LED_G = 9;
-const short PIN_LED_B = 8;
+const uint8_t PIN_NEOPIXEL = 11;
+const uint8_t PIN_LED_R = 10;
+const uint8_t PIN_LED_G = 9;
+const uint8_t PIN_LED_B = 8;
 
 #define DEBUG_SERIAL 1
 
@@ -33,11 +32,11 @@ int lastUpdated_a;          //This is used to keep track of the last time the
 int lastUpdated_b;          //signal was sent.  If nothing is sent for 1s, we disable that output by just setting it hard to 1500ms.
 UniversalTimer watchdog(100, true);
 
-const short int num_stripes = 1;
-const short int num_leds = 1;
-short int ledState = LOW;
+const uint8_t num_stripes = 2;
+const uint8_t num_leds = 1;
+uint8_t ledState = LOW;
 
-Adafruit_NeoPixel botlight(num_stripes * num_leds, PIN_NEOPIXEL, NEO_GRB);
+CRGB botlight[num_stripes * num_leds];
 
 
 //this lists the states the fubarino side of the car can be in
@@ -70,7 +69,7 @@ struct commandDataStruct {
   int16_t gx;          // yaw
   int16_t gy;          // pitch
   int16_t gz;          // roll
-  unsigned long time;  // millis
+  uint32_t time;  // millis
   int str;             // steering 1000-2000
   int thr;             // throttle 1000-2000
   // int checksum;    someday???
@@ -84,13 +83,13 @@ int gTheOldRCcommand;
 int gTheOldPiCommand;
 
 // These values will be car-specific
-const unsigned long minimumSteeringValue = 1000;
-const unsigned long maximumSteeringValue = 2000;
-const unsigned long minimumThrottleValue = 1000;
-const unsigned long maximumThrottleValue = 2000;
-const unsigned long gCenteredSteeringValue = 1500;  // minimumSteeringValue + (maximumSteeringValue - minimumSteeringValue) / 2
-const unsigned long gCenteredThrottleValue = 1500;  // minimumThrottleValue + (maximumThrottleValue - minimumThrottleValue) / 2
-const unsigned long throttleThresholdToShutdownAuto = 1600;
+const uint32_t minimumSteeringValue = 1000;
+const uint32_t maximumSteeringValue = 2000;
+const uint32_t minimumThrottleValue = 1000;
+const uint32_t maximumThrottleValue = 2000;
+const uint32_t gCenteredSteeringValue = 1500;  // minimumSteeringValue + (maximumSteeringValue - minimumSteeringValue) / 2
+const uint32_t gCenteredThrottleValue = 1500;  // minimumThrottleValue + (maximumThrottleValue - minimumThrottleValue) / 2
+const uint32_t throttleThresholdToShutdownAuto = 1600;
 
 Servo ServoSTR;
 Servo ServoTHR;
@@ -119,11 +118,14 @@ void channel_b_ISR() {
 	}
 }
 
-void show_color(short int r, short int g, short int b) {
-    for(int i=0; i < num_leds * num_stripes; i++) {
-        botlight.setPixelColor(i, botlight.Color(r + i * 10, g, b));
-        botlight.setPixelColor(i + num_stripes - 1, botlight.Color(r + i * 10, g, b));
-        botlight.show();
+void show_color(uint8_t r, uint8_t g, uint8_t b) {
+    for(int i = 0; i < num_leds * num_stripes; i++) {
+        //botlight.setPixelColor(i, botlight.Color(r + i * 10, g, b));
+        //botlight.setPixelColor(i + num_stripes - 1, botlight.Color(r + i * 10, g, b));
+        //botlight.show();
+        botlight[i] = CRGB(r, g, b); 
+        
+        FastLED.show();
     }
 }
 
@@ -145,8 +147,8 @@ void setup() {
 
     gTheOldRCcommand = NOT_ACTUAL_COMMAND;
     gcarState = STATE_MANUAL;             // Start of in manual (rc control) mode
-    botlight.begin();
-    show_color(255, 0, 0);
+    FastLED.addLeds<WS2813, PIN_NEOPIXEL, GRB>(botlight, num_stripes * num_leds);  // GRB ordering is assumed
+    show_color(63, 0, 0);
 }
 
 void checkDisable() {
@@ -154,12 +156,11 @@ void checkDisable() {
 	if ((micros() - lastUpdated_a > 25000) || (micros() - lastUpdated_b > 25000)) {
 		chan_a = 1500;
 		chan_b = 1500;
-        show_color(255, 0, 0);
 	}
 
     if (ledState == LOW)
         ledState = HIGH;
-    else 
+    else
         ledState = LOW;
     digitalWrite(PIN_LED, ledState);
 }
@@ -256,8 +257,8 @@ void getSerialCommandIfAvailable(commandDataStruct *theDataPtr){
 
 void handleRCSignals( commandDataStruct *theDataPtr ) {
     theDataPtr->time = millis();
-    unsigned long STR_VAL = chan_a; // Read pulse width of
-    unsigned long THR_VAL = chan_b; // each channel
+    uint32_t STR_VAL = chan_a; // Read pulse width of
+    uint32_t THR_VAL = chan_b; // each channel
     if (STR_VAL == 0 || STR_VAL >= maximumSteeringValue) {  // no steering RC signal
         if( gTheOldRCcommand != RC_SIGNAL_WAS_LOST ) {      // only print RC message once
             if (DEBUG_SERIAL) {
@@ -326,6 +327,7 @@ void loop() {
 
     switch (gcarState) {
       case STATE_TERM_AUTO:
+        show_color(63, 0, 0);
         //if we are in this state, we recieved an RC stop signal, and we're waiting
         //for an ack from the pi so we can stop sending the stop command. All we care
         //about is getting the ack, so we don't even need to check the RC input
@@ -339,8 +341,8 @@ void loop() {
       	}
 	    break;
       case STATE_AUTONOMOUS:
-        Serial.println("AUTONOMOUS MODE");
-        show_color(255, 255, 0);
+        Serial.println("AUTONOMOUS MODE (blue)");
+        show_color(0, 0, 63);
         //autonomous state-- while in this state, we have to check for stop auto
         //commands from serial or RC. The only things we check for are RUN_AUTONOMOUSLY
         //and STOP_AUTONOMOUS commands from the Pi, and RC_SIGNALED_STOP_AUTONOMOUS commands
@@ -376,8 +378,8 @@ void loop() {
       	}
         break;
       case STATE_MANUAL:
-        Serial.println("MANUAL MODE");
-        show_color(255, 127, 0);
+        Serial.println("MANUAL MODE (amber)");
+        show_color(63, 31, 0);
         //manual RC state -- while in this state, we send back data frames with the RC signals
         //we also observe for run_auto commands from the Pi and stop_auto commands from the Pi.
         //Receiving the latter while we're in manual means the Pi missed the stopped_auto ack,
